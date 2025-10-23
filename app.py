@@ -199,14 +199,6 @@ def main():
         </div>
     """, unsafe_allow_html=True)
     
-    # Info-Box für Datenhinweis
-    st.markdown("""
-        <div class="info-notice">
-            <strong>ℹ️ Hinweis:</strong> Ferien- und Feiertagsdaten sind für <strong>2026</strong> vollständig verfügbar.
-            Für die Jahre 2027-2036 können Sie die Daten in der Datei <code>ferien_check_2026.py</code> manuell anpassen,
-            da diese von Schulbehörden jährlich festgelegt werden.
-        </div>
-    """, unsafe_allow_html=True)
     
     st.markdown("<br>", unsafe_allow_html=True)
     
