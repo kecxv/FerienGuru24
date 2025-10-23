@@ -2,61 +2,62 @@ import streamlit as st
 import requests
 from datetime import datetime, timedelta
 
-# Bundesländer
+# Bundesländer (ISO Codes für die API!)
 BUNDESLAENDER = {
-    'Baden-Württemberg': 'BW',
-    'Bayern': 'BY',
-    'Berlin': 'BE',
-    'Brandenburg': 'BB',
-    'Bremen': 'HB',
-    'Hamburg': 'HH',
-    'Hessen': 'HE',
-    'Mecklenburg-Vorpommern': 'MV',
-    'Niedersachsen': 'NI',
-    'Nordrhein-Westfalen': 'NW',  # ACHTUNG: OpenHolidays nutzt NW statt NRW!
-    'Rheinland-Pfalz': 'RP',
-    'Saarland': 'SL',
-    'Sachsen': 'SN',
-    'Sachsen-Anhalt': 'ST',
-    'Schleswig-Holstein': 'SH',
-    'Thüringen': 'TH',
+    'Baden-Württemberg': 'DE-BW',
+    'Bayern': 'DE-BY',
+    'Berlin': 'DE-BE',
+    'Brandenburg': 'DE-BB',
+    'Bremen': 'DE-HB',
+    'Hamburg': 'DE-HH',
+    'Hessen': 'DE-HE',
+    'Mecklenburg-Vorpommern': 'DE-MV',
+    'Niedersachsen': 'DE-NI',
+    'Nordrhein-Westfalen': 'DE-NW',
+    'Rheinland-Pfalz': 'DE-RP',
+    'Saarland': 'DE-SL',
+    'Sachsen': 'DE-SN',
+    'Sachsen-Anhalt': 'DE-ST',
+    'Schleswig-Holstein': 'DE-SH',
+    'Thüringen': 'DE-TH',
 }
 
-def fetch_holidays_and_vacations(year, country, subdivision=None):
-    url = f"https://api.openholidaysapi.org/v1/{year}"
-    params = {"country": country}
-    if subdivision:
-        params["subdivisions"] = subdivision
+def get_school_holidays(year, country_code, subdivision_code=None):
+    url = "https://openholidaysapi.org/SchoolHolidays"
+    params = {
+        "countryIsoCode": country_code,
+        "validFrom": f"{year}-01-01",
+        "validTo": f"{year}-12-31",
+        "languageIsoCode": "DE"
+    }
+    if subdivision_code:
+        params["subdivisionCode"] = subdivision_code
     try:
         resp = requests.get(url, params=params, timeout=10)
         resp.raise_for_status()
-        data = resp.json()
-        # Parse holidays and vacations (API response may vary)
-        holidays = []
-        vacations = []
-        if "holidays" in data:
-            for h in data["holidays"]:
-                holidays.append({
-                    "date": h.get("date", ""),
-                    "name": h.get("localName", h.get("name", "")),
-                    "type": h.get("type", "")
-                })
-        if "schoolVacations" in data:
-            for v in data["schoolVacations"]:
-                vacations.append({
-                    "name": v.get("name", v.get("type", "")),
-                    "start": v.get("start"),
-                    "end": v.get("end")
-                })
-        return holidays, vacations
+        return resp.json()
     except Exception as e:
-        st.error(f"Fehler beim Laden der API-Daten: {e}")
-        return [], []
+        st.error(f"Fehler beim Laden der Ferien-Daten: {e}")
+        return []
+
+def get_public_holidays_by_date(date, language_code="DE"):
+    url = "https://openholidaysapi.org/PublicHolidaysByDate"
+    params = {
+        "date": date,
+        "languageIsoCode": language_code
+    }
+    try:
+        resp = requests.get(url, params=params, timeout=10)
+        resp.raise_for_status()
+        return resp.json()
+    except Exception as e:
+        st.error(f"Fehler beim Laden der Feiertags-Daten: {e}")
+        return []
 
 def main():
-    st.set_page_config(page_title="Ferien & Feiertags-Checker", layout="centered")
+    st.set_page_config(page_title="Ferien & Feiertage Checker", layout="centered")
     st.title("Ferien- & Feiertags-Checker (OpenHolidays API)")
-    st.markdown("Alle Daten werden **direkt und ausschließlich von der OpenHolidays API** geladen.")
+    st.markdown("Daten aus der **OpenHolidays API** für Deutschland und Dänemark.")
 
     col1, col2, col3, col4 = st.columns([2,2,2,1.5])
     with col1:
@@ -77,63 +78,76 @@ def main():
             st.error("Ungültiges Datumsformat. Bitte TT.MM.JJJJ verwenden.")
             return
 
-        # DE: Bundesland
-        holidays_de, vacations_de = fetch_holidays_and_vacations(jahr, "DE", BUNDESLAENDER[bundesland_name])
+        # Deutschland Schulferien & Feiertage
+        ferien_de = get_school_holidays(jahr, "DE", BUNDESLAENDER[bundesland_name])
+        feiertage_de = []
+        tag = dt_von
+        while tag <= dt_bis:
+            feiertage_de += get_public_holidays_by_date(tag.strftime("%Y-%m-%d"), "DE")
+            tag += timedelta(days=1)
 
-        # DK: Dänemark
-        holidays_dk, vacations_dk = fetch_holidays_and_vacations(jahr, "DK")
+        # Dänemark Schulferien & Feiertage
+        ferien_dk = get_school_holidays(jahr, "DK")
+        feiertage_dk = []
+        tag = dt_von
+        while tag <= dt_bis:
+            feiertage_dk += get_public_holidays_by_date(tag.strftime("%Y-%m-%d"), "DA")
+            tag += timedelta(days=1)
 
         st.markdown("### Vergleichsergebnis")
         col_de, col_dk = st.columns(2)
 
-        def filter_dates(items, key_date_from, key_date_to=None):
-            out = []
-            for item in items:
-                if key_date_to:
-                    try:
-                        start = datetime.strptime(item[key_date_from], "%Y-%m-%d")
-                        end = datetime.strptime(item[key_date_to], "%Y-%m-%d")
-                        if start <= dt_bis and end >= dt_von:
-                            out.append(item)
-                    except:
-                        continue
-                else:
-                    try:
-                        d = datetime.strptime(item[key_date_from], "%Y-%m-%d")
-                        if dt_von <= d <= dt_bis:
-                            out.append(item)
-                    except:
-                        continue
-            return out
+        def filter_ferien(ferien, dt_von, dt_bis):
+            result = []
+            for entry in ferien:
+                try:
+                    start = datetime.strptime(entry['startDate'], "%Y-%m-%d")
+                    end = datetime.strptime(entry['endDate'], "%Y-%m-%d")
+                    if start <= dt_bis and end >= dt_von:
+                        result.append(entry)
+                except:
+                    continue
+            return result
+
+        def filter_feiertage(feiertage, dt_von, dt_bis):
+            result = []
+            for entry in feiertage:
+                try:
+                    date = datetime.strptime(entry['date'], "%Y-%m-%d")
+                    if dt_von <= date <= dt_bis:
+                        result.append(entry)
+                except:
+                    continue
+            return result
 
         with col_de:
             st.markdown(f"#### Deutschland – {bundesland_name}")
-            f_holidays = filter_dates(holidays_de, "date")
-            f_vacations = filter_dates(vacations_de, "start", "end")
-            if f_holidays:
-                st.success("Feiertage:")
-                for h in f_holidays:
-                    st.markdown(f"- {h['date']}: {h['name']}")
-            if f_vacations:
+            gef_ferien = filter_ferien(ferien_de, dt_von, dt_bis)
+            gef_feiertage = filter_feiertage(feiertage_de, dt_von, dt_bis)
+            if gef_ferien:
                 st.success("Ferien:")
-                for v in f_vacations:
-                    st.markdown(f"- {v['name']}: {v['start']} bis {v['end']}")
-            if not f_holidays and not f_vacations:
+                for f in gef_ferien:
+                    st.markdown(f"- {f['name']} ({f['startDate']} bis {f['endDate']})")
+            if gef_feiertage:
+                st.info("Feiertage:")
+                for h in gef_feiertage:
+                    st.markdown(f"- {h['name']} ({h['date']})")
+            if not gef_ferien and not gef_feiertage:
                 st.warning("Keine Ferien oder Feiertage im Zeitraum.")
 
         with col_dk:
             st.markdown("#### Dänemark")
-            f_holidays = filter_dates(holidays_dk, "date")
-            f_vacations = filter_dates(vacations_dk, "start", "end")
-            if f_holidays:
-                st.success("Feiertage:")
-                for h in f_holidays:
-                    st.markdown(f"- {h['date']}: {h['name']}")
-            if f_vacations:
+            gef_ferien = filter_ferien(ferien_dk, dt_von, dt_bis)
+            gef_feiertage = filter_feiertage(feiertage_dk, dt_von, dt_bis)
+            if gef_ferien:
                 st.success("Ferien:")
-                for v in f_vacations:
-                    st.markdown(f"- {v['name']}: {v['start']} bis {v['end']}")
-            if not f_holidays and not f_vacations:
+                for f in gef_ferien:
+                    st.markdown(f"- {f['name']} ({f['startDate']} bis {f['endDate']})")
+            if gef_feiertage:
+                st.info("Feiertage:")
+                for h in gef_feiertage:
+                    st.markdown(f"- {h['name']} ({h['date']})")
+            if not gef_ferien and not gef_feiertage:
                 st.warning("Keine Ferien oder Feiertage im Zeitraum.")
 
 if __name__ == "__main__":
