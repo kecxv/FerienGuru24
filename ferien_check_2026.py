@@ -1,18 +1,15 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
 Ferien- und Feiertags-Checker für Deutschland und Dänemark 2026
 Überprüft, ob ein Datum auf Schulferien oder Feiertage fällt
-Mit Tkinter-GUI für einfache Bedienung
+Ohne Tkinter! Nur für Web-App und Konsolen-Nutzung.
 """
 
-import pandas as pd
 from datetime import datetime
 
 def get_available_years():
     """
     Gibt die Liste der verfügbaren Jahre zurück (2026-2036)
-    
     Returns:
         list: Liste von Jahren (z.B. [2026, 2027, ..., 2036])
     """
@@ -29,11 +26,11 @@ DEUTSCHE_FEIERTAGE_2026 = {
     'Christi Himmelfahrt': '14.05.2026',
     'Pfingstsonntag': '24.05.2026',
     'Pfingstmontag': '25.05.2026',
-    'Fronleichnam': '04.06.2026',  # BW, BY, HE, NW, RP, SL
+    'Fronleichnam': '04.06.2026',  # BW, BY, HE, NRW, RP, SL
     'Mariä Himmelfahrt': '15.08.2026',  # BY (regional), SL
     'Tag der Deutschen Einheit': '03.10.2026',
     'Reformationstag': '31.10.2026',  # BB, MV, SN, ST, TH
-    'Allerheiligen': '01.11.2026',  # BW, BY, NW, RP, SL
+    'Allerheiligen': '01.11.2026',  # BW, BY, NRW, RP, SL
     'Buß- und Bettag': '18.11.2026',  # SN
     '1. Weihnachtstag': '25.12.2026',
     '2. Weihnachtstag': '26.12.2026',
@@ -57,7 +54,7 @@ FEIERTAGE_BUNDESLAENDER = {
     'HE': ['Neujahr', 'Karfreitag', 'Ostermontag', 'Tag der Arbeit', 'Christi Himmelfahrt', 
            'Pfingstmontag', 'Fronleichnam', 'Tag der Deutschen Einheit', '1. Weihnachtstag', '2. Weihnachtstag'],
     'MV': ['Neujahr', 'Karfreitag', 'Ostermontag', 'Tag der Arbeit', 'Christi Himmelfahrt', 
-           'Pfingstmontag', 'Tag der Deutschen Einheit', 'Reformationstag', '1. Weihnahtstag', '2. Weihnachtstag'],
+           'Pfingstmontag', 'Tag der Deutschen Einheit', 'Reformationstag', '1. Weihnachtstag', '2. Weihnachtstag'],
     'NI': ['Neujahr', 'Karfreitag', 'Ostermontag', 'Tag der Arbeit', 'Christi Himmelfahrt', 
            'Pfingstmontag', 'Tag der Deutschen Einheit', '1. Weihnachtstag', '2. Weihnachtstag'],
     'NRW': ['Neujahr', 'Karfreitag', 'Ostermontag', 'Tag der Arbeit', 'Christi Himmelfahrt', 
@@ -245,11 +242,9 @@ def is_date_in_range(datum, start_str, end_str):
 def check_date(datum_str, bundesland='NRW'):
     """
     Überprüft, ob ein Datum auf Ferien oder Feiertage fällt
-    
     Args:
         datum_str: Datum im Format TT.MM.JJJJ
         bundesland: Bundesland-Kürzel (z.B. 'BY', 'NRW', 'BW') oder 'DK' für Dänemark
-    
     Returns:
         Liste von Strings mit den Ergebnissen
     """
@@ -291,7 +286,7 @@ def check_date(datum_str, bundesland='NRW'):
     
     return ergebnisse
 
-
+# Konsolenhilfen (optional, werden im Web nicht verwendet)
 def print_beispiele():
     """Zeigt Beispiel-Aufrufe der check_date Funktion"""
     print("=" * 70)
@@ -349,181 +344,3 @@ def show_bundeslaender_info():
     for kuerzel, name in sorted(bundeslaender_namen.items()):
         print(f"  {kuerzel:4s} - {name}")
     print()
-
-
-class FerienCheckerGUI:
-    """
-    Tkinter-GUI für den Ferien- und Feiertags-Checker
-    """
-    
-    def __init__(self, root):
-        """Initialisiert die GUI"""
-        self.root = root
-        self.root.title("Ferien- und Feiertags-Checker 2026")
-        self.root.geometry("600x500")
-        self.root.resizable(True, True)
-        
-        # Bundesländer-Namen für Dropdown (mit vollständigen Namen)
-        self.bundeslaender = {
-            'Baden-Württemberg': 'BW',
-            'Bayern': 'BY',
-            'Berlin': 'BE',
-            'Brandenburg': 'BB',
-            'Bremen': 'HB',
-            'Hamburg': 'HH',
-            'Hessen': 'HE',
-            'Mecklenburg-Vorpommern': 'MV',
-            'Niedersachsen': 'NI',
-            'Nordrhein-Westfalen': 'NRW',
-            'Rheinland-Pfalz': 'RP',
-            'Saarland': 'SL',
-            'Sachsen': 'SN',
-            'Sachsen-Anhalt': 'ST',
-            'Schleswig-Holstein': 'SH',
-            'Thüringen': 'TH',
-            'Dänemark': 'DK',
-        }
-        
-        self.create_widgets()
-    
-    def create_widgets(self):
-        """Erstellt alle GUI-Elemente"""
-        
-        # Hauptrahmen mit Padding
-        main_frame = ttk.Frame(self.root, padding="20")
-        main_frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
-        
-        # Titel
-        title_label = ttk.Label(
-            main_frame, 
-            text="Ferien- und Feiertags-Checker 2026",
-            font=('Arial', 16, 'bold')
-        )
-        title_label.grid(row=0, column=0, columnspan=2, pady=(0, 20))
-        
-        # Datum-Eingabefeld
-        datum_label = ttk.Label(main_frame, text="Datum (TT.MM.JJJJ):", font=('Arial', 10))
-        datum_label.grid(row=1, column=0, sticky=tk.W, pady=5)
-        
-        self.datum_entry = ttk.Entry(main_frame, width=25, font=('Arial', 10))
-        self.datum_entry.grid(row=1, column=1, sticky=(tk.W, tk.E), pady=5)
-        self.datum_entry.insert(0, "15.07.2026")  # Beispiel-Datum
-        
-        # Bundesland-Dropdown
-        bundesland_label = ttk.Label(main_frame, text="Bundesland:", font=('Arial', 10))
-        bundesland_label.grid(row=2, column=0, sticky=tk.W, pady=5)
-        
-        self.bundesland_var = tk.StringVar(value='Nordrhein-Westfalen')
-        bundesland_dropdown = ttk.Combobox(
-            main_frame, 
-            textvariable=self.bundesland_var,
-            values=list(self.bundeslaender.keys()),
-            state='readonly',
-            width=23,
-            font=('Arial', 10)
-        )
-        bundesland_dropdown.grid(row=2, column=1, sticky=(tk.W, tk.E), pady=5)
-        
-        # Prüfen-Button
-        pruefen_button = ttk.Button(
-            main_frame,
-            text="Prüfen",
-            command=self.pruefen_datum,
-            width=20
-        )
-        pruefen_button.grid(row=3, column=0, columnspan=2, pady=20)
-        
-        # Ergebnis-Label
-        ergebnis_label = ttk.Label(main_frame, text="Ergebnis:", font=('Arial', 10, 'bold'))
-        ergebnis_label.grid(row=4, column=0, columnspan=2, sticky=tk.W, pady=(10, 5))
-        
-        # Ergebnis-Textfeld mit Scrollbar
-        text_frame = ttk.Frame(main_frame)
-        text_frame.grid(row=5, column=0, columnspan=2, sticky=(tk.W, tk.E, tk.N, tk.S))
-        
-        # Scrollbar
-        scrollbar = ttk.Scrollbar(text_frame)
-        scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
-        
-        # Textfeld für Ergebnisse
-        self.ergebnis_text = tk.Text(
-            text_frame,
-            height=12,
-            width=50,
-            wrap=tk.WORD,
-            font=('Arial', 10),
-            yscrollcommand=scrollbar.set
-        )
-        self.ergebnis_text.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        scrollbar.config(command=self.ergebnis_text.yview)
-        
-        # Info-Text am unteren Rand
-        info_label = ttk.Label(
-            main_frame,
-            text="Überprüft Ferien und Feiertage für Deutschland und Dänemark",
-            font=('Arial', 8),
-            foreground='gray'
-        )
-        info_label.grid(row=6, column=0, columnspan=2, pady=(10, 0))
-        
-        # Grid-Gewichtung für responsive Layout
-        self.root.columnconfigure(0, weight=1)
-        self.root.rowconfigure(0, weight=1)
-        main_frame.columnconfigure(1, weight=1)
-        main_frame.rowconfigure(5, weight=1)
-    
-    def pruefen_datum(self):
-        """
-        Wird beim Klick auf 'Prüfen'-Button aufgerufen
-        Ruft check_date() auf und zeigt Ergebnisse an
-        """
-        # Eingaben holen
-        datum_str = self.datum_entry.get().strip()
-        bundesland_name = self.bundesland_var.get()
-        bundesland_kuerzel = self.bundeslaender[bundesland_name]
-        
-        # Validierung: Datum darf nicht leer sein
-        if not datum_str:
-            messagebox.showwarning("Warnung", "Bitte geben Sie ein Datum ein!")
-            return
-        
-        # Check-Funktion aufrufen
-        ergebnisse = check_date(datum_str, bundesland_kuerzel)
-        
-        # Ergebnis-Textfeld leeren
-        self.ergebnis_text.delete('1.0', tk.END)
-        
-        # Ergebnisse anzeigen
-        self.ergebnis_text.insert('1.0', f"Datum: {datum_str}\n")
-        self.ergebnis_text.insert(tk.END, f"Region: {bundesland_name}\n")
-        self.ergebnis_text.insert(tk.END, "=" * 50 + "\n\n")
-        
-        # Jedes Ergebnis in eigener Zeile
-        for ergebnis in ergebnisse:
-            self.ergebnis_text.insert(tk.END, f"• {ergebnis}\n")
-        
-        # Farbliche Hervorhebung je nach Ergebnis
-        if any("Ferien" in erg or "Feiertag" in erg for erg in ergebnisse):
-            # Grüner Hintergrund für Ferien/Feiertage
-            self.ergebnis_text.tag_add("highlight", "4.0", tk.END)
-            self.ergebnis_text.tag_config("highlight", foreground="darkgreen", font=('Arial', 10, 'bold'))
-        else:
-            # Normale Anzeige wenn kein Feiertag/Ferien
-            self.ergebnis_text.tag_add("normal", "4.0", tk.END)
-            self.ergebnis_text.tag_config("normal", foreground="darkred")
-
-
-def start_gui():
-    """Startet die Tkinter-GUI-Anwendung"""
-    root = tk.Tk()
-    app = FerienCheckerGUI(root)
-    root.mainloop()
-
-
-if __name__ == '__main__':
-    # Starte GUI (kommentieren Sie die nächste Zeile aus für Konsolen-Modus)
-    start_gui()
-    
-    # Alternativ: Konsolen-Modus (auskommentiert)
-    # show_bundeslaender_info()
-    # print_beispiele()
