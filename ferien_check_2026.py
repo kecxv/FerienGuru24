@@ -8,10 +8,6 @@ Mit Tkinter-GUI für einfache Bedienung
 
 import pandas as pd
 from datetime import datetime
-import tkinter as tk
-from tkinter import ttk
-from tkinter import messagebox
-
 
 def get_available_years():
     """
